@@ -1,11 +1,8 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from http.server import BaseHTTPRequestHandler
 import json
 import os
 import requests
-
-app = Flask(__name__)
-CORS(app)
+from urllib.parse import parse_qs, urlparse
 
 # Groq API Configuration
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
@@ -52,26 +49,80 @@ def query_groq(prompt, system_message="You are a helpful AI assistant."):
     except Exception as e:
         return f"An exception occurred: {str(e)}"
 
-@app.route('/api/generate-query', methods=['POST'])
-def generate_query():
-    try:
-        data = request.get_json()
-        question = data.get('question', '')
-        csv_data = data.get('csvData', [])
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
         
-        if not question or not csv_data:
-            return jsonify({'error': 'Question and CSV data are required'}), 400
-        
-        # Create CSV preview without pandas
-        if csv_data:
-            # Get first few rows as preview
-            preview_rows = csv_data[:3]  # First 3 rows
-            csv_preview = "\n".join([str(row) for row in preview_rows])
+        if self.path == '/api/health':
+            response = {
+                'status': 'healthy', 
+                'message': 'Backend is running',
+                'provider': 'Groq API',
+                'model': GROQ_MODEL,
+                'api_key_set': bool(GROQ_API_KEY),
+                'api_key_length': len(GROQ_API_KEY) if GROQ_API_KEY else 0
+            }
         else:
-            csv_preview = "No data available"
+            response = {
+                'status': 'success',
+                'message': 'API is working!',
+                'path': self.path
+            }
         
-        # Create prompt with better instructions
-        prompt = f"""You are a SQL expert. Generate ONLY the SQL query that directly answers the user's question.
+        self.wfile.write(json.dumps(response).encode())
+        return
+
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        
+        try:
+            # Read request body
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            if self.path == '/api/generate-query':
+                response = self.handle_generate_query(data)
+            elif self.path == '/api/sql-help':
+                response = self.handle_sql_help(data)
+            else:
+                response = {
+                    'error': 'Unknown endpoint',
+                    'path': self.path
+                }
+                
+        except Exception as e:
+            response = {
+                'error': 'Request processing error',
+                'details': str(e)
+            }
+        
+        self.wfile.write(json.dumps(response).encode())
+        return
+
+    def handle_generate_query(self, data):
+        try:
+            question = data.get('question', '')
+            csv_data = data.get('csvData', [])
+            
+            if not question or not csv_data:
+                return {'error': 'Question and CSV data are required', 'success': False}
+            
+            # Create CSV preview without pandas
+            if csv_data:
+                preview_rows = csv_data[:3]  # First 3 rows
+                csv_preview = "\n".join([str(row) for row in preview_rows])
+            else:
+                csv_preview = "No data available"
+            
+            # Create prompt with better instructions
+            prompt = f"""You are a SQL expert. Generate ONLY the SQL query that directly answers the user's question.
 
 CSV Data Sample:
 {csv_preview}
@@ -86,19 +137,16 @@ Instructions:
 5. Return ONLY the SQL query, nothing else
 
 SQL Query:"""
-        
-        # Get response from Groq
-        sql_query = query_groq(prompt, "You are a SQL expert. Generate only SQL queries without any explanations.")
-        
-        # Check if there was an error with the API call
-        if sql_query.startswith("Error:"):
-            return jsonify({
-                'error': sql_query,
-                'success': False
-            }), 500
-        
-        # Generate explanation
-        explanation_prompt = f"""Explain this SQL query in a simple, structured way:
+            
+            # Get response from Groq
+            sql_query = query_groq(prompt, "You are a SQL expert. Generate only SQL queries without any explanations.")
+            
+            # Check if there was an error with the API call
+            if sql_query.startswith("Error:"):
+                return {'error': sql_query, 'success': False}
+            
+            # Generate explanation
+            explanation_prompt = f"""Explain this SQL query in a simple, structured way:
 
 Query: {sql_query}
 
@@ -112,116 +160,39 @@ How it works:
 3. WHERE: [Explain any filtering conditions, if present]
 
 Keep explanations simple and clear."""
-        
-        explanation = query_groq(explanation_prompt, "You are a SQL educator. Explain SQL queries in simple, structured terms.")
-        
-        # Check if there was an error with the explanation
-        if explanation.startswith("Error:"):
-            explanation = "Query generated successfully, but explanation could not be generated."
-        
-        return jsonify({
-            'sql': sql_query,
-            'explanation': explanation,
-            'success': True
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/sql-help', methods=['POST'])
-def sql_help():
-    try:
-        data = request.get_json()
-        question = data.get('question', '')
-        
-        if not question:
-            return jsonify({'error': 'Question is required'}), 400
-        
-        # Create a prompt for SQL help
-        help_prompt = f"Provide a clear explanation and examples for: {question}"
-        
-        # Get response from Groq
-        answer = query_groq(help_prompt, "You are a SQL expert and educator. Provide clear, helpful explanations with examples.")
-        
-        return jsonify({
-            'answer': answer,
-            'success': True
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/upload-csv', methods=['POST'])
-def upload_csv():
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        if file and file.filename.endswith('.csv'):
-            # Read CSV content
-            content = file.read().decode('utf-8')
-            lines = content.strip().split('\n')
             
-            if len(lines) > 0:
-                # Parse CSV manually
-                headers = lines[0].split(',')
-                preview = []
-                
-                for line in lines[1:11]:  # First 10 data rows
-                    if line.strip():
-                        values = line.split(',')
-                        row = dict(zip(headers, values))
-                        preview.append(row)
-                
-                return jsonify({
-                    'success': True,
-                    'preview': preview,
-                    'total_rows': len(lines) - 1,
-                    'columns': headers
-                })
-            else:
-                return jsonify({'error': 'Empty CSV file'}), 400
-        else:
-            return jsonify({'error': 'Invalid file type. Please upload a CSV file.'}), 400
+            explanation = query_groq(explanation_prompt, "You are a SQL educator. Explain SQL queries in simple, structured terms.")
             
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        'status': 'healthy', 
-        'message': 'Backend is running',
-        'provider': 'Groq API',
-        'model': GROQ_MODEL,
-        'api_key_set': bool(GROQ_API_KEY),
-        'api_key_length': len(GROQ_API_KEY) if GROQ_API_KEY else 0
-    })
-
-# Vercel serverless function handler
-def handler(request, context):
-    try:
-        return app(request, context)
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Serverless function error',
-                'details': str(e)
-            }),
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+            # Check if there was an error with the explanation
+            if explanation.startswith("Error:"):
+                explanation = "Query generated successfully, but explanation could not be generated."
+            
+            return {
+                'sql': sql_query,
+                'explanation': explanation,
+                'success': True
             }
-        }
+            
+        except Exception as e:
+            return {'error': str(e), 'success': False}
 
-# Local development server
-if __name__ == '__main__':
-    print("Starting Querify Backend with Groq API...")
-    print("Make sure GROQ_API_KEY environment variable is set")
-    print("API will be available at http://localhost:5000")
-    app.run(debug=True, port=5000)
+    def handle_sql_help(self, data):
+        try:
+            question = data.get('question', '')
+            
+            if not question:
+                return {'error': 'Question is required', 'success': False}
+            
+            # Create a prompt for SQL help
+            help_prompt = f"Provide a clear explanation and examples for: {question}"
+            
+            # Get response from Groq
+            answer = query_groq(help_prompt, "You are a SQL expert and educator. Provide clear, helpful explanations with examples.")
+            
+            return {
+                'answer': answer,
+                'success': True
+            }
+            
+        except Exception as e:
+            return {'error': str(e), 'success': False}
