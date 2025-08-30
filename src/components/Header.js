@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Database, Sparkles, Zap, Cpu } from 'lucide-react';
+import { Database, Sparkles, Cpu } from 'lucide-react';
 
 const Header = () => {
   return (

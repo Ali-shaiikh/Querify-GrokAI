@@ -2,8 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Database, 
-  Settings, 
-  Info,
   Github,
   Zap,
   Cpu,

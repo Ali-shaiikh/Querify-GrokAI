@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { 
@@ -16,7 +16,7 @@ import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
 const MainContent = () => {
-  const { csvData, actions, settings } = useApp();
+  const { csvData, actions } = useApp();
   const [question, setQuestion] = useState('');
   const [generatedQuery, setGeneratedQuery] = useState('');
   const [explanation, setExplanation] = useState('');
