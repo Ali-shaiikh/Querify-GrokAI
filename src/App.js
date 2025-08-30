@@ -5,15 +5,17 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import SQLFloatingElements from './components/SQLFloatingElements';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { AppProvider } from './context/AppContext';
 import './index.css';
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <div className="min-h-screen relative overflow-hidden">
+    <ErrorBoundary>
+      <AppProvider>
+        <Router>
+          <div className="min-h-screen relative overflow-hidden">
           {/* Tech Grid Pattern */}
           <div className="tech-grid"></div>
           
@@ -52,9 +54,10 @@ function App() {
               </main>
             </div>
           </div>
-        </div>
-      </Router>
-    </AppProvider>
+                  </div>
+        </Router>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 
