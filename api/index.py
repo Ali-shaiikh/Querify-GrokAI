@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import pandas as pd
 import json
 import os
 import requests
@@ -63,11 +62,13 @@ def generate_query():
         if not question or not csv_data:
             return jsonify({'error': 'Question and CSV data are required'}), 400
         
-        # Convert CSV data to pandas DataFrame
-        df = pd.DataFrame(csv_data)
-        
-        # Create CSV preview
-        csv_preview = df.head().to_string(index=False)
+        # Create CSV preview without pandas
+        if csv_data:
+            # Get first few rows as preview
+            preview_rows = csv_data[:3]  # First 3 rows
+            csv_preview = "\n".join([str(row) for row in preview_rows])
+        else:
+            csv_preview = "No data available"
         
         # Create prompt with better instructions
         prompt = f"""You are a SQL expert. Generate ONLY the SQL query that directly answers the user's question.
@@ -161,16 +162,29 @@ def upload_csv():
             return jsonify({'error': 'No file selected'}), 400
         
         if file and file.filename.endswith('.csv'):
-            # Read CSV directly from memory
-            df = pd.read_csv(file)
-            preview = df.head(10).to_dict('records')
+            # Read CSV content
+            content = file.read().decode('utf-8')
+            lines = content.strip().split('\n')
             
-            return jsonify({
-                'success': True,
-                'preview': preview,
-                'total_rows': len(df),
-                'columns': df.columns.tolist()
-            })
+            if len(lines) > 0:
+                # Parse CSV manually
+                headers = lines[0].split(',')
+                preview = []
+                
+                for line in lines[1:11]:  # First 10 data rows
+                    if line.strip():
+                        values = line.split(',')
+                        row = dict(zip(headers, values))
+                        preview.append(row)
+                
+                return jsonify({
+                    'success': True,
+                    'preview': preview,
+                    'total_rows': len(lines) - 1,
+                    'columns': headers
+                })
+            else:
+                return jsonify({'error': 'Empty CSV file'}), 400
         else:
             return jsonify({'error': 'Invalid file type. Please upload a CSV file.'}), 400
             
