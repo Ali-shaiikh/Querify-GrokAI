@@ -184,7 +184,9 @@ def health_check():
         'status': 'healthy', 
         'message': 'Backend is running',
         'provider': 'Groq API',
-        'model': GROQ_MODEL
+        'model': GROQ_MODEL,
+        'api_key_set': bool(GROQ_API_KEY),
+        'api_key_length': len(GROQ_API_KEY) if GROQ_API_KEY else 0
     })
 
 # Vercel serverless function handler
