@@ -105,7 +105,7 @@ const QueryGenerator = () => {
           return (
             <div key={index} className="mb-4">
               <h4 className="text-blue-400 font-bold text-lg mb-2">What it does:</h4>
-              <p className="text-gray-200 font-medium leading-relaxed">
+              <p className="text-white font-medium leading-relaxed">
                 {trimmedLine.replace('What it does:', '').trim()}
               </p>
             </div>
@@ -134,7 +134,7 @@ const QueryGenerator = () => {
                   <span className="font-bold text-green-400 text-lg">{keyword}:</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-200 font-medium leading-relaxed">
+                  <p className="text-white font-medium leading-relaxed">
                     {explanation}
                   </p>
                 </div>
@@ -145,7 +145,7 @@ const QueryGenerator = () => {
         
         if (trimmedLine && !trimmedLine.startsWith('Keep explanations')) {
           return (
-            <p key={index} className="text-gray-200 leading-relaxed mb-2">
+            <p key={index} className="text-white leading-relaxed mb-2">
               {trimmedLine}
             </p>
           );
@@ -156,7 +156,7 @@ const QueryGenerator = () => {
       .filter(Boolean);
     
     return formattedText.length > 0 ? formattedText : (
-      <p className="text-gray-200 leading-relaxed">{explanation}</p>
+      <p className="text-white leading-relaxed">{explanation}</p>
     );
   };
 
@@ -398,7 +398,7 @@ ${explanation}`;
                 </div>
                 
                 <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-                  <div className="text-gray-200 leading-relaxed">
+                  <div className="text-white leading-relaxed">
                     {formatExplanation(explanation)}
                   </div>
                 </div>

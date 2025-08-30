@@ -372,7 +372,7 @@ ${explanation}`;
                     {/* What it does */}
                     <div className="border-l-4 border-blue-500 pl-4">
                       <h4 className="text-sm font-semibold text-gray-800 mb-2">What it does:</h4>
-                      <p className="text-gray-600 text-sm leading-relaxed">
+                      <p className="text-gray-800 text-sm leading-relaxed">
                         {explanation.includes('What it does:') 
                           ? explanation.split('What it does:')[1]?.split('How it works:')[0]?.trim() || explanation
                           : explanation
@@ -398,7 +398,7 @@ ${explanation}`;
                                       </span>
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-sm text-gray-600 leading-relaxed">
+                                      <p className="text-sm text-gray-800 leading-relaxed">
                                         {parts.slice(1).join(':').trim()}
                                       </p>
                                     </div>
@@ -416,7 +416,7 @@ ${explanation}`;
                     {!explanation.includes('What it does:') && !explanation.includes('How it works:') && (
                       <div className="border-l-4 border-purple-500 pl-4">
                         <h4 className="text-sm font-semibold text-gray-800 mb-2">Explanation:</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed">
+                        <p className="text-gray-800 text-sm leading-relaxed">
                           {explanation}
                         </p>
                       </div>
