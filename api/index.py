@@ -4,7 +4,6 @@ import pandas as pd
 import json
 import os
 import requests
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
@@ -191,7 +190,20 @@ def health_check():
 
 # Vercel serverless function handler
 def handler(request, context):
-    return app(request, context)
+    try:
+        return app(request, context)
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': 'Serverless function error',
+                'details': str(e)
+            }),
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
+        }
 
 # Local development server
 if __name__ == '__main__':
