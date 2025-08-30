@@ -1,0 +1,3 @@
+[33m379b809[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m Remove all hardcoded API keys from documentation
+[33m1efc772[m Remove hardcoded API key for security - use environment variables
+[33mc9d0390[m Initial commit: Querify SQL Generator with Groq API and Vercel-ready setup

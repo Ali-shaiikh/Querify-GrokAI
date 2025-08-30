@@ -1,0 +1,16 @@
+id,name,age,city,salary,department,hire_date,performance_score
+1,John Smith,28,New York,75000,Engineering,2022-01-15,85
+2,Sarah Johnson,32,Los Angeles,82000,Marketing,2021-06-20,92
+3,Michael Brown,29,Chicago,68000,Sales,2022-03-10,78
+4,Emily Davis,35,San Francisco,95000,Engineering,2020-11-05,88
+5,David Wilson,31,Boston,72000,HR,2022-02-28,81
+6,Lisa Anderson,27,Seattle,78000,Engineering,2022-04-12,90
+7,James Taylor,33,Austin,85000,Marketing,2021-09-15,87
+8,Jennifer Martinez,30,Denver,70000,Sales,2022-01-30,76
+9,Robert Garcia,34,Portland,88000,Engineering,2021-12-01,94
+10,Amanda Rodriguez,26,Miami,65000,HR,2022-05-18,79
+11,Christopher Lee,29,Atlanta,73000,Sales,2022-03-25,82
+12,Jessica White,31,San Diego,80000,Marketing,2021-08-10,89
+13,Daniel Thompson,28,Dallas,69000,Engineering,2022-02-14,85
+14,Michelle Clark,33,Phoenix,76000,Sales,2021-10-22,80
+15,Kevin Lewis,30,Philadelphia,81000,Marketing,2022-01-08,91
