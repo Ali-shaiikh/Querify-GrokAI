@@ -19,6 +19,9 @@ def query_groq(prompt, system_message="You are a helpful AI assistant."):
     Query Groq API for text generation
     """
     try:
+        if not GROQ_API_KEY:
+            return "Error: GROQ_API_KEY environment variable is not set. Please configure your API key in Vercel."
+        
         headers = {
             "Authorization": f"Bearer {GROQ_API_KEY}",
             "Content-Type": "application/json"
@@ -41,6 +44,10 @@ def query_groq(prompt, system_message="You are a helpful AI assistant."):
         if response.status_code == 200:
             result = response.json()
             return result['choices'][0]['message']['content'].strip()
+        elif response.status_code == 401:
+            return "Error: Invalid GROQ API key. Please check your API key configuration."
+        elif response.status_code == 429:
+            return "Error: Rate limit exceeded. Please try again later."
         else:
             return f"Error: {response.status_code} - {response.text}"
             
@@ -83,6 +90,13 @@ SQL Query:"""
         # Get response from Groq
         sql_query = query_groq(prompt, "You are a SQL expert. Generate only SQL queries without any explanations.")
         
+        # Check if there was an error with the API call
+        if sql_query.startswith("Error:"):
+            return jsonify({
+                'error': sql_query,
+                'success': False
+            }), 500
+        
         # Generate explanation
         explanation_prompt = f"""Explain this SQL query in a simple, structured way:
 
@@ -100,6 +114,10 @@ How it works:
 Keep explanations simple and clear."""
         
         explanation = query_groq(explanation_prompt, "You are a SQL educator. Explain SQL queries in simple, structured terms.")
+        
+        # Check if there was an error with the explanation
+        if explanation.startswith("Error:"):
+            explanation = "Query generated successfully, but explanation could not be generated."
         
         return jsonify({
             'sql': sql_query,
